@@ -1,0 +1,15 @@
+# Main env: Python 3.11 (pyenv virtualenv flithack-3.11)
+demucs-mlx[convert]>=1.4.0
+beat-this>=1.1.0
+basic-pitch>=0.4.0
+librosa>=0.10.0
+pretty_midi>=0.2.10
+soundfile>=0.12.0
+numpy>=1.24
+torch>=2.0
+# setuptools<81 keeps pkg_resources for resampy/basic-pitch
+setuptools>=70,<81
+# Fallback separator (already useful if demucs-mlx flakes)
+audio-separator>=0.30
+# Drum transcription primary
+adtof-pytorch @ git+https://github.com/xavriley/ADTOF-pytorch

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=70,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flithack"
+version = "0.1.0"
+description = "Reference audio → analysis + per-part MIDI (hackathon block A)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "demucs-mlx[convert]>=1.4.0",
+  "beat-this>=1.1.0",
+  "basic-pitch>=0.4.0",
+  "librosa>=0.10.0",
+  "pretty_midi>=0.2.10",
+  "soundfile>=0.12.0",
+  "numpy>=1.24",
+  "torch>=2.0",
+  "setuptools>=70,<81",
+  "audio-separator>=0.30",
+]
+
+[project.scripts]
+flithack = "flithack.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["flithack*"]
