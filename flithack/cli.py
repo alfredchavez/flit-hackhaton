@@ -7,6 +7,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def ingest(input_path: Path, out_wav: Path, sample_rate: int = 44100) -> Path:
     """ffmpeg → normalized full-length WAV."""
@@ -191,6 +195,111 @@ def cmd_fixture(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_generate(args: argparse.Namespace) -> int:
+    """Block B: PLAN + PARTS + render, or render a local fixture (no LLM)."""
+    if args.render_fixture:
+        import json
+        from pathlib import Path as P
+
+        from flithack.generate import (
+            generation_prompt_sha256,
+            normalize_parts,
+            normalize_plan,
+            write_complete_marker,
+        )
+        from flithack.preview import render_preview
+        from flithack.render import render
+
+        fixture = P(args.render_fixture)
+        data = json.loads(fixture.read_text())
+        out = P(args.output or "generation_output/fixture").resolve()
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "generation_complete.json").unlink(missing_ok=True)
+        plan = normalize_plan(data["plan"])
+        parts = normalize_parts(data["parts"], plan)
+        warnings = render(plan, parts, out)
+        if not args.skip_preview:
+            ok, w = render_preview(out / "song.mid", out / "preview.wav")
+            if not ok and w:
+                warnings.append(w)
+        else:
+            (out / "preview.wav").unlink(missing_ok=True)
+            warnings.append("preview_unavailable:skipped")
+        (out / "generation_plan.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "0.1",
+                    "user_prompt": "(fixture)",
+                    "variation_nonce": 0,
+                    "model": "fixture",
+                    "prompt_sha256": generation_prompt_sha256(),
+                    "analysis_sha256": "fixture",
+                    "plan": plan,
+                    "parts": parts,
+                    "warnings": warnings,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        write_complete_marker(out, warnings)
+        print(f"[flithack] rendered fixture → {out}")
+        print(f"  warnings={warnings}")
+        return 0
+
+    from flithack.generate import generate_track
+
+    if not args.analysis_output:
+        print("error: analysis_output path required (or use --render-fixture)", file=sys.stderr)
+        return 1
+    root = Path(args.analysis_output).resolve()
+    if not (root / "reference_profile.json").is_file():
+        print(f"error: not a valid analysis_output/: {root}", file=sys.stderr)
+        return 1
+    try:
+        result = generate_track(
+            root,
+            user_prompt=args.prompt or "",
+            output_dir=Path(args.output).resolve() if args.output else None,
+            skip_preview=bool(args.skip_preview),
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"error: generation failed: {exc}", file=sys.stderr)
+        return 1
+    if not result.get("ok"):
+        print(f"error: {result.get('error')}", file=sys.stderr)
+        return 1
+    print(f"[flithack] generation → {result['output_dir']}")
+    print(f"  warnings={result.get('warnings')}")
+    return 0
+
+
+def cmd_interpret(args: argparse.Namespace) -> int:
+    """Rerun LLM interpretation on an existing analysis_output/ (no re-separation)."""
+    from flithack.interpret import interpret_analysis
+    from flithack.midi_repr import midi_repr
+
+    root = Path(args.analysis_output).resolve()
+    if not (root / "reference_profile.json").is_file():
+        print(f"error: not a valid analysis_output/: {root}", file=sys.stderr)
+        return 1
+
+    if args.dump_repr:
+        text = midi_repr(root)
+        print(text)
+        return 0
+
+    result = interpret_analysis(root, force=bool(args.force), skip_network=False)
+    if result.get("ok"):
+        print(f"[flithack] interpretation ok (cached={result.get('cached')})")
+        return 0
+    if result.get("skipped"):
+        print(f"[flithack] interpretation skipped: {result.get('error')}")
+        return 0  # not a hard failure per SPEC_2
+    print(f"[flithack] interpretation failed (pipeline still valid): {result.get('error')}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="flithack",
@@ -235,7 +344,62 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fixture.set_defaults(func=cmd_fixture)
 
+    interpret = sub.add_parser(
+        "interpret",
+        help="LLM interpretation of an existing analysis_output/ (MIDI→text→OpenAI)",
+    )
+    interpret.add_argument(
+        "analysis_output",
+        help="Path to analysis_output/ directory",
+    )
+    interpret.add_argument(
+        "--force",
+        action="store_true",
+        help="Ignore interpretation cache and call the API again",
+    )
+    interpret.add_argument(
+        "--dump-repr",
+        action="store_true",
+        help="Only print midi_repr() text (no API call)",
+    )
+    interpret.set_defaults(func=cmd_interpret)
+
+    generate = sub.add_parser(
+        "generate",
+        help="Block B: plan+parts LLM → new MIDI track from analysis_output/",
+    )
+    generate.add_argument(
+        "analysis_output",
+        nargs="?",
+        default=None,
+        help="Path to analysis_output/ directory (omit with --render-fixture)",
+    )
+    generate.add_argument(
+        "-p",
+        "--prompt",
+        default="",
+        help='User prompt (default: "same vibe as the reference")',
+    )
+    generate.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="generation_output/ parent or concrete dir (default: sibling generation_output/)",
+    )
+    generate.add_argument(
+        "--skip-preview",
+        action="store_true",
+        help="Skip FluidSynth preview.wav",
+    )
+    generate.add_argument(
+        "--render-fixture",
+        default=None,
+        help="Render a tests/fixtures/*.json plan+parts (no LLM)",
+    )
+    generate.set_defaults(func=cmd_generate)
+
     return p
+
 
 
 def main(argv: list[str] | None = None) -> int:

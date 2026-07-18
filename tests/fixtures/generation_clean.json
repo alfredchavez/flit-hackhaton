@@ -1,0 +1,105 @@
+{
+  "plan": {
+    "title": "Fixture Loop",
+    "bpm": 120.0,
+    "key": "C minor",
+    "meter": "4/4",
+    "style_notes": "dark driving loop",
+    "sections": [
+      {
+        "id": "intro",
+        "name": "Intro",
+        "bars": 4,
+        "energy": 0.3,
+        "active_parts": ["drums", "bass", "harmony"],
+        "chords": ["Cm", "Cm", "Ab", "Bb"]
+      },
+      {
+        "id": "groove_a",
+        "name": "Groove A",
+        "bars": 8,
+        "energy": 0.7,
+        "active_parts": ["drums", "bass", "harmony", "melody"],
+        "chords": ["Cm", "Ab", "Eb", "Bb", "Cm", "Ab", "Eb", "Bb"]
+      },
+      {
+        "id": "outro",
+        "name": "Outro",
+        "bars": 4,
+        "energy": 0.4,
+        "active_parts": ["drums", "bass", "harmony", "melody"],
+        "chords": ["Cm", "Ab", "Bb", "Cm"]
+      }
+    ]
+  },
+  "parts": {
+    "drums": [
+      {
+        "section_id": "intro",
+        "kick": "x...x...x...x...",
+        "snare": "....x.......x...",
+        "closed_hat": "x.x.x.x.x.x.x.x.",
+        "tom": "................",
+        "cymbal": "x...............",
+        "fill_last_bar": false
+      },
+      {
+        "section_id": "groove_a",
+        "kick": "x...x...x...x...",
+        "snare": "....x.......x...",
+        "closed_hat": "xxxxxxxxxxxxxxxx",
+        "tom": "................",
+        "cymbal": "................",
+        "fill_last_bar": true
+      },
+      {
+        "section_id": "outro",
+        "kick": "x...x...x...x...",
+        "snare": "....x.......x...",
+        "closed_hat": "x.x.x.x.x.x.x.x.",
+        "tom": "............x.x.",
+        "cymbal": "..............x.",
+        "fill_last_bar": false
+      }
+    ],
+    "bass": [
+      {
+        "section_id": "intro",
+        "events_by_bar": [
+          "C2@1.0 len1.0 accent | C2@3.0 len1.0 med",
+          "Ab1@1.0 len2.0 med | Bb1@3.0 len1.0 soft"
+        ]
+      },
+      {
+        "section_id": "groove_a",
+        "events_by_bar": [
+          "C2@1.0 len0.5 accent | C2@2.0 len0.5 soft | Eb2@3.0 len0.5 med | C2@4.0 len0.5 soft",
+          "Ab1@1.0 len1.0 accent | Ab1@3.0 len1.0 med",
+          "Eb2@1.0 len1.0 med | Eb2@2.5 len0.5 soft | Bb1@3.0 len1.0 accent",
+          "Bb1@1.0 len2.0 med | Bb1@3.5 len0.5 soft"
+        ]
+      },
+      {
+        "section_id": "outro",
+        "events_by_bar": [
+          "C2@1.0 len2.0 accent | C2@3.0 len1.0 soft"
+        ]
+      }
+    ],
+    "melody": [
+      {
+        "section_id": "groove_a",
+        "events_by_bar": [
+          "G4@1.0 len1.0 accent | Bb4@2.0 len0.5 med | C5@3.0 len1.0 soft | Bb4@4.0 len0.5 med",
+          "Eb4@1.0 len2.0 med | F4@3.0 len1.0 soft | G4@4.0 len0.5 accent"
+        ]
+      },
+      {
+        "section_id": "outro",
+        "events_by_bar": [
+          "G4@1.0 len3.0 soft | Eb4@4.0 len1.0 med"
+        ]
+      }
+    ]
+  }
+}

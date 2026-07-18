@@ -1,0 +1,73 @@
+{
+  "plan": {
+    "title": "Messy Fixture",
+    "bpm": 999,
+    "key": "not a key",
+    "meter": "7/8",
+    "style_notes": "intentionally broken inputs",
+    "sections": [
+      {
+        "id": "groove_a",
+        "name": "Groove",
+        "bars": 20,
+        "energy": 2.5,
+        "active_parts": ["drums", "bass", "harmony", "melody", "vocals", "drums"],
+        "chords": ["Cm", "WeirdChord", "Ab"]
+      }
+    ]
+  },
+  "parts": {
+    "drums": [
+      {
+        "section_id": "groove_a",
+        "kick": "x...x...x...x..",
+        "snare": "....x.......x...EXTRA",
+        "closed_hat": "x.x.x.x.x.x.x.x.",
+        "tom": "................",
+        "cymbal": "................",
+        "fill_last_bar": true
+      },
+      {
+        "section_id": "unknown_section",
+        "kick": "x...............",
+        "snare": "................",
+        "closed_hat": "................",
+        "tom": "................",
+        "cymbal": "................",
+        "fill_last_bar": false
+      }
+    ],
+    "bass": [
+      {
+        "section_id": "groove_a",
+        "events_by_bar": [
+          "C2@1.0 len1.0 accent | NOT_A_NOTE@2.0 len1.0 med | C2@3.0 len0.5 soft",
+          "C0@1.0 len1.0 soft",
+          "Eb2@1.0 len1.0 med",
+          "G2@1.0 len1.0 med",
+          "should_be_truncated@1.0 len1.0 med"
+        ]
+      }
+    ],
+    "melody": [
+      {
+        "section_id": "groove_a",
+        "events_by_bar": [
+          "C7@1.0 len1.0 accent | G4@2.0 len0.5 med"
+        ]
+      },
+      {
+        "section_id": "groove_a",
+        "events_by_bar": [
+          "Eb5@1.0 len2.0 soft"
+        ]
+      },
+      {
+        "section_id": "groove_a",
+        "events_by_bar": [
+          "F5@1.0 len1.0 med"
+        ]
+      }
+    ]
+  }
+}

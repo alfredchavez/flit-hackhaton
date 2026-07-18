@@ -1,39 +1,58 @@
 # flithack
 
-Hackathon **block A**: reference audio → musical profile + editable MIDI parts.
+Hackathon pipeline: **reference audio → musical profile + editable MIDI parts**, plus optional LLM interpretation and a Streamlit UI.
 
 ```bash
 # pyenv virtualenv flithack-3.11 (see .python-version)
 python -m flithack analyze reference.mp3 -o analysis_output/
+python -m flithack interpret analysis_output/
+streamlit run app.py
 ```
 
-Output contract: see `SPEC.md` §4 (`analysis_output/`).
+Output contract: `SPEC.md` §4 + additive `llm_interpretation.json` (`SPEC_2.md`).
 
 ## Setup
 
 ```bash
 brew install ffmpeg
-pyenv local flithack-3.11   # or: pyenv activate flithack-3.11
+pyenv local flithack-3.11
 pip install -e .
-# optional drum model (if not already installed)
-pip install "git+https://github.com/xavriley/ADTOF-pytorch"
+pip install "git+https://github.com/xavriley/ADTOF-pytorch"   # drums
+pip install streamlit openai python-dotenv pydantic            # UI + LLM (pinned in requirements.txt)
+
+cp .env.example .env   # set OPENAI_API_KEY
 ```
 
 ## Commands
 
 ```bash
-# Full pipeline
+# Full pipeline (stages 1–8)
 python -m flithack analyze song.mp3 -o analysis_output/
-
-# Ignore stage caches
 python -m flithack analyze song.mp3 -o analysis_output/ --force
-
-# Skip 1/16 quantization (debug)
 python -m flithack analyze song.mp3 -o analysis_output/ --no-quantize
 
-# Fake fixture for downstream teammate
+# MIDI → text only (no API)
+python -m flithack interpret analysis_output/ --dump-repr
+
+# LLM interpretation on cached analysis (stages 9–10)
+python -m flithack interpret analysis_output/
+python -m flithack interpret analysis_output/ --force
+
+# Block B: new track from analysis_output/ + prompt (stages 11–14)
+python -m flithack generate analysis_output/ -p "boss battle, darker, faster"
+python -m flithack generate analysis_output/ -p "calm exploration" -o generation_output/
+
+# Render hardcoded fixture (no LLM) — hour-0 gate
+python -m flithack generate --render-fixture tests/fixtures/generation_clean.json -o /tmp/gen_fix
+
+# Fake fixture for downstream
 python -m flithack fixture -o analysis_output/
+
+# Web UI (imports stage functions; not a CLI subprocess)
+streamlit run app.py
 ```
+
+Optional: `brew install fluid-synth` and place `assets/FluidR3_GM.sf2` (or set `SOUNDFONT_PATH`). Preview failure still leaves MIDI intact.
 
 ## Stages
 
@@ -45,3 +64,9 @@ python -m flithack fixture -o analysis_output/
 6. Transcription (ADTOF drums + Basic Pitch)
 7. Postprocess + melody
 8. Package `analysis_output/`
+9. MIDI → text (`midi_repr.py`)
+10. LLM interpretation (`interpret.py`, OpenAI mini) — never fails the pipeline
+11. PLAN (LLM → key/bpm/sections/chords)
+12. PARTS (LLM → drum grids + bass/melody phrases)
+13. RENDER (deterministic MIDI)
+14. PREVIEW (FluidSynth → preview.wav, optional)

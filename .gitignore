@@ -1,3 +1,4 @@
+.env
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -7,6 +8,9 @@ build/
 .venv/
 .work/
 analysis_output/
+generation_output/
+runs/
+assets/
 *.wav
 *.mp3
 *.flac

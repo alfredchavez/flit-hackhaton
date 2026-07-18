@@ -14,11 +14,17 @@ dependencies = [
   "basic-pitch>=0.4.0",
   "librosa>=0.10.0",
   "pretty_midi>=0.2.10",
+  "mido>=1.2.10",
   "soundfile>=0.12.0",
   "numpy>=1.24",
   "torch>=2.0",
   "setuptools>=70,<81",
   "audio-separator>=0.30",
+  "streamlit==1.59.2",
+  "openai==2.46.0",
+  "httpx>=0.27,<1",
+  "python-dotenv==1.2.2",
+  "pydantic==2.13.4",
 ]
 
 [project.scripts]

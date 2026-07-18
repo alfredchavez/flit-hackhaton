@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>FLIT — Pitch</title>
+<style>
+  :root{
+    --bg:#14171E;
+    --panel:#1C202A;
+    --line:rgba(255,255,255,0.08);
+    --ink:#EFECE4;
+    --muted:#97A0B5;
+    --drums:#F0A33F;
+    --bass:#E56B8C;
+    --vocals:#6FB7E9;
+    --melody:#5EC9A0;
+    --otros:#9C8CF0;
+  }
+  @page{ size:13.333in 7.5in; margin:0; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ background:var(--bg); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body{ font-family:"Avenir Next","Avenir","Helvetica Neue",sans-serif; color:var(--ink); }
+
+  .slide{
+    width:13.333in; height:7.5in; position:relative; overflow:hidden;
+    page-break-after:always; break-after:page;
+    padding:0.62in 0.7in 0.62in; display:flex; flex-direction:column;
+    justify-content:center; background:var(--bg);
+  }
+
+  /* DAW bar-ruler chrome, injected on every slide */
+  .ruler{
+    position:absolute; top:0; left:0; right:0; height:0.2in;
+    display:flex; border-bottom:1px solid var(--line);
+  }
+  .ruler span{
+    flex:1; border-left:1px solid rgba(255,255,255,0.10);
+    font:6.5pt "Menlo",monospace; color:rgba(255,255,255,0.30);
+    padding:0.03in 0 0 0.04in;
+  }
+  .ruler span:first-child{ border-left:none; }
+  .foot{
+    position:absolute; bottom:0.26in; left:0.7in; right:0.7in;
+    display:flex; justify-content:space-between;
+    font:7pt "Menlo",monospace; color:rgba(255,255,255,0.35);
+    letter-spacing:0.06em;
+  }
+
+  .eyebrow{
+    display:flex; align-items:center; gap:0.1in;
+    font:8.5pt "Menlo",monospace; letter-spacing:0.14em; color:var(--muted);
+    text-transform:uppercase; margin-bottom:0.22in;
+  }
+  .eyebrow b{ width:0.11in; height:0.11in; border-radius:2px; background:var(--melody); }
+
+  h1{ font-family:"Futura","Avenir Next",sans-serif; font-weight:700; }
+  .title h1{ font-size:86pt; letter-spacing:0.015em; line-height:1; }
+  h2{
+    font-family:"Futura","Avenir Next",sans-serif; font-weight:700;
+    font-size:33pt; line-height:1.12; margin-bottom:0.28in; max-width:10.6in;
+  }
+  .lead{ font-size:13.5pt; line-height:1.5; color:var(--ink); max-width:9.4in; }
+  .muted{ color:var(--muted); }
+
+  .panel{
+    background:var(--panel); border:1px solid var(--line); border-radius:6px;
+  }
+
+  /* piano-roll / arrangement motif */
+  .roll{ padding:0.22in 0.28in; }
+  .lane{ display:flex; align-items:center; gap:0.16in; height:0.34in; }
+  .lane .lab{ font:7.5pt "Menlo",monospace; letter-spacing:0.08em; width:0.72in; text-align:right; }
+  .lane .track{
+    position:relative; flex:1; height:0.2in;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 0.52in);
+    border-radius:2px;
+  }
+  .lane .track i{ position:absolute; top:0.015in; height:0.17in; border-radius:2.5px; opacity:0.95; }
+  .lane .mid{ font:7.5pt "Menlo",monospace; color:var(--muted); width:1.05in; }
+
+  /* cards */
+  .cards{ display:flex; gap:0.28in; }
+  .card{ flex:1; padding:0.26in 0.28in; }
+  .card .k{ font:8pt "Menlo",monospace; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:0.12in; display:block; }
+  .card p{ font-size:11.5pt; line-height:1.5; color:var(--ink); }
+  .card p .muted{ font-size:10.5pt; }
+
+  ul.list{ list-style:none; }
+  ul.list li{
+    font-size:12.5pt; line-height:1.45; padding-left:0.3in; position:relative; margin-bottom:0.17in; max-width:9.6in;
+  }
+  ul.list li::before{
+    content:""; position:absolute; left:0; top:0.09in; width:0.14in; height:0.09in;
+    border-radius:2px; background:var(--melody);
+  }
+  ul.list li:nth-child(2)::before{ background:var(--drums); }
+  ul.list li:nth-child(3)::before{ background:var(--vocals); }
+  ul.list li:nth-child(4)::before{ background:var(--bass); }
+  ul.list li:nth-child(5)::before{ background:var(--otros); }
+
+  .steps{ counter-reset:st; }
+  .step{ display:flex; gap:0.2in; margin-bottom:0.24in; }
+  .step .n{
+    font:700 11pt "Menlo",monospace; color:var(--bg);
+    width:0.32in; height:0.32in; border-radius:3px; background:var(--ink);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:0.02in;
+  }
+  .step h3{ font-size:13pt; font-weight:600; margin-bottom:0.05in; }
+  .step p{ font-size:11pt; line-height:1.45; color:var(--muted); }
+
+  .quote{
+    font-family:"Futura","Avenir Next",sans-serif; font-weight:500;
+    font-size:21pt; line-height:1.4; max-width:10.8in;
+  }
+
+  /* lean canvas */
+  .canvas{
+    display:grid; flex:1;
+    grid-template-columns:repeat(10,1fr);
+    grid-template-rows:1.05fr 1.05fr 0.62fr;
+    gap:0.09in; margin-top:0.05in;
+  }
+  .cell{ background:var(--panel); border:1px solid var(--line); border-radius:5px; padding:0.13in 0.15in; overflow:hidden; }
+  .cell .k{ font:7pt "Menlo",monospace; letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:0.07in; }
+  .cell p, .cell li{ font-size:8.6pt; line-height:1.38; color:var(--ink); }
+  .cell ul{ list-style:none; }
+  .cell li{ padding-left:0.13in; position:relative; margin-bottom:0.045in; }
+  .cell li::before{ content:"–"; position:absolute; left:0; color:var(--muted); }
+  .cell .uvp{ font-size:10pt; line-height:1.4; font-weight:600; }
+
+  .price{
+    font-family:"Futura","Avenir Next",sans-serif; font-weight:700;
+    font-size:58pt; color:var(--drums); line-height:1.05;
+  }
+  .price small{ font-size:16pt; color:var(--ink); font-weight:500; font-family:"Avenir Next",sans-serif; display:block; margin-top:0.08in; }
+
+  .vs{ display:flex; flex-direction:column; gap:0.22in; }
+  .vs .row{ display:flex; gap:0.3in; padding:0.24in 0.3in; align-items:flex-start; }
+  .vs .who{ width:2.1in; flex-shrink:0; }
+  .vs .who .k{ font:9pt "Menlo",monospace; letter-spacing:0.1em; }
+  .vs .who p{ font-size:9.5pt; color:var(--muted); margin-top:0.05in; line-height:1.4; }
+  .vs .how{ font-size:12pt; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<!-- 01 · PORTADA -->
+<section class="slide title">
+  <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+    <div class="eyebrow"><b></b>PITCH · JULIO 2026</div>
+    <h1>FLIT</h1>
+    <p class="lead" style="font-size:16.5pt; margin-top:0.18in; max-width:9.8in;">
+      Prompt + audio de referencia → <strong>partes MIDI editables</strong> para tu videojuego.
+    </p>
+  </div>
+  <div class="panel roll">
+    <div class="lane"><span class="lab" style="color:var(--drums)">DRUMS</span>
+      <div class="track">
+        <i style="left:1%;width:2.5%;background:var(--drums)"></i><i style="left:6%;width:2.5%;background:var(--drums)"></i><i style="left:11%;width:2.5%;background:var(--drums)"></i><i style="left:16%;width:2.5%;background:var(--drums)"></i><i style="left:21%;width:2.5%;background:var(--drums)"></i><i style="left:26%;width:2.5%;background:var(--drums)"></i><i style="left:31%;width:2.5%;background:var(--drums)"></i><i style="left:36%;width:2.5%;background:var(--drums)"></i><i style="left:44%;width:2.5%;background:var(--drums)"></i><i style="left:49%;width:2.5%;background:var(--drums)"></i><i style="left:54%;width:2.5%;background:var(--drums)"></i><i style="left:59%;width:2.5%;background:var(--drums)"></i><i style="left:64%;width:2.5%;background:var(--drums)"></i><i style="left:69%;width:2.5%;background:var(--drums)"></i><i style="left:74%;width:2.5%;background:var(--drums)"></i><i style="left:79%;width:2.5%;background:var(--drums)"></i><i style="left:87%;width:2.5%;background:var(--drums)"></i><i style="left:92%;width:2.5%;background:var(--drums)"></i>
+      </div>
+    </div>
+    <div class="lane"><span class="lab" style="color:var(--bass)">BASS</span>
+      <div class="track">
+        <i style="left:1%;width:7%;background:var(--bass)"></i><i style="left:10%;width:5%;background:var(--bass)"></i><i style="left:17%;width:9%;background:var(--bass)"></i><i style="left:29%;width:6%;background:var(--bass)"></i><i style="left:38%;width:10%;background:var(--bass)"></i><i style="left:51%;width:6%;background:var(--bass)"></i><i style="left:60%;width:9%;background:var(--bass)"></i><i style="left:72%;width:5%;background:var(--bass)"></i><i style="left:80%;width:12%;background:var(--bass)"></i>
+      </div>
+    </div>
+    <div class="lane"><span class="lab" style="color:var(--vocals)">VOCALS</span>
+      <div class="track">
+        <i style="left:9%;width:14%;background:var(--vocals)"></i><i style="left:26%;width:9%;background:var(--vocals)"></i><i style="left:47%;width:13%;background:var(--vocals)"></i><i style="left:63%;width:8%;background:var(--vocals)"></i><i style="left:81%;width:11%;background:var(--vocals)"></i>
+      </div>
+    </div>
+    <div class="lane"><span class="lab" style="color:var(--melody)">MELODY</span>
+      <div class="track">
+        <i style="left:2%;width:4%;background:var(--melody)"></i><i style="left:8%;width:6%;background:var(--melody)"></i><i style="left:17%;width:3.5%;background:var(--melody)"></i><i style="left:23%;width:6%;background:var(--melody)"></i><i style="left:33%;width:4%;background:var(--melody)"></i><i style="left:40%;width:7%;background:var(--melody)"></i><i style="left:52%;width:4%;background:var(--melody)"></i><i style="left:58%;width:6%;background:var(--melody)"></i><i style="left:68%;width:3.5%;background:var(--melody)"></i><i style="left:74%;width:6%;background:var(--melody)"></i><i style="left:84%;width:4%;background:var(--melody)"></i><i style="left:90%;width:6%;background:var(--melody)"></i>
+      </div>
+    </div>
+    <div class="lane"><span class="lab" style="color:var(--otros)">OTROS</span>
+      <div class="track">
+        <i style="left:1%;width:20%;background:var(--otros)"></i><i style="left:24%;width:20%;background:var(--otros)"></i><i style="left:47%;width:20%;background:var(--otros)"></i><i style="left:70%;width:22%;background:var(--otros)"></i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 · PROBLEMA -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--bass)"></b>El problema</div>
+  <h2>Quiere lanzar su juego.<br>No sabe de música.</h2>
+  <p class="lead" style="margin-bottom:0.35in;">
+    Un creador indie de videojuegos quiere desarrollar y vender su juego. Puede explicar el mood que
+    busca y mostrar una canción de referencia — pero no puede componer, arreglar ni preparar el audio.
+  </p>
+  <div class="cards">
+    <div class="card panel"><span class="k" style="color:var(--drums)">Compositor</span>
+      <p>Contratar a un compositor es caro y lento para un presupuesto indie.</p></div>
+    <div class="card panel"><span class="k" style="color:var(--vocals)">Packs de stock</span>
+      <p>La música genérica de stock no encaja con la identidad de su juego.</p></div>
+    <div class="card panel"><span class="k" style="color:var(--bass)">IA generativa</span>
+      <p>Suno y similares devuelven un WAV cerrado: no se puede editar, ni adaptar al juego.</p></div>
+  </div>
+</section>
+
+<!-- 03 · SOLUCIÓN -->
+<section class="slide">
+  <div class="eyebrow"><b></b>La solución</div>
+  <h2>Prompt + referencia → MIDI editable.</h2>
+  <p class="lead" style="margin-bottom:0.35in;">
+    Describe lo que quieres y sube un audio de referencia. FLIT te entrega partes MIDI nuevas:
+    previsualízalas, impórtalas a tu DAW, cambia notas e instrumentos, y conviértelas en stems
+    de audio para tu juego.
+  </p>
+  <div class="cards">
+    <div class="card panel"><span class="k" style="color:var(--melody)">1 · Describe</span>
+      <p>«Quiero algo tenso y oscuro para el nivel de las cuevas.»</p></div>
+    <div class="card panel"><span class="k" style="color:var(--vocals)">2 · Referencia</span>
+      <p>Sube la canción que suena como lo que imaginas.</p></div>
+    <div class="card panel"><span class="k" style="color:var(--drums)">3 · MIDI editable</span>
+      <p>Recibe drums, bass, melodía y armonía como archivos .mid listos para tu DAW.</p></div>
+  </div>
+</section>
+
+<!-- 04 · CÓMO FUNCIONA -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--vocals)"></b>Cómo funciona</div>
+  <h2>De una canción a sus bloques.</h2>
+  <div style="display:flex; gap:0.5in;">
+    <div class="steps" style="flex:1.1;">
+      <div class="step"><div class="n">1</div><div>
+        <h3>Analizamos la referencia</h3>
+        <p>Tonalidad y escala, género, BPM, compás, energía y acordes.</p></div></div>
+      <div class="step"><div class="n">2</div><div>
+        <h3>Separamos y transcribimos</h3>
+        <p>La canción se divide en stems y cada parte se convierte a MIDI.</p></div></div>
+      <div class="step"><div class="n">3</div><div>
+        <h3>Generamos stems MIDI nuevos</h3>
+        <p>La IA compone partes originales guiada por tu prompt y el perfil musical de la referencia.</p></div></div>
+      <div class="step"><div class="n">4</div><div>
+        <h3>Preview → DAW → juego</h3>
+        <p>Escucha el resultado, colócalo en tu DAW, elige instrumentos y renderiza stems de audio.</p></div></div>
+    </div>
+    <div class="panel roll" style="flex:1; align-self:flex-start; width:100%; padding:0.3in 0.28in;">
+      <div class="lane"><span class="lab" style="color:var(--drums)">DRUMS</span>
+        <div class="track"><i style="left:2%;width:3.5%;background:var(--drums)"></i><i style="left:9%;width:3.5%;background:var(--drums)"></i><i style="left:16%;width:3.5%;background:var(--drums)"></i><i style="left:23%;width:3.5%;background:var(--drums)"></i><i style="left:30%;width:3.5%;background:var(--drums)"></i><i style="left:37%;width:3.5%;background:var(--drums)"></i><i style="left:44%;width:3.5%;background:var(--drums)"></i><i style="left:51%;width:3.5%;background:var(--drums)"></i><i style="left:58%;width:3.5%;background:var(--drums)"></i><i style="left:65%;width:3.5%;background:var(--drums)"></i><i style="left:72%;width:3.5%;background:var(--drums)"></i><i style="left:79%;width:3.5%;background:var(--drums)"></i><i style="left:86%;width:3.5%;background:var(--drums)"></i></div>
+        <span class="mid">→ drums.mid</span></div>
+      <div class="lane"><span class="lab" style="color:var(--bass)">BASS</span>
+        <div class="track"><i style="left:2%;width:10%;background:var(--bass)"></i><i style="left:15%;width:8%;background:var(--bass)"></i><i style="left:26%;width:12%;background:var(--bass)"></i><i style="left:42%;width:13%;background:var(--bass)"></i><i style="left:58%;width:9%;background:var(--bass)"></i><i style="left:70%;width:8%;background:var(--bass)"></i><i style="left:81%;width:11%;background:var(--bass)"></i></div>
+        <span class="mid">→ bass.mid</span></div>
+      <div class="lane"><span class="lab" style="color:var(--vocals)">VOCALS</span>
+        <div class="track"><i style="left:6%;width:18%;background:var(--vocals)"></i><i style="left:30%;width:12%;background:var(--vocals)"></i><i style="left:46%;width:9%;background:var(--vocals)"></i><i style="left:59%;width:14%;background:var(--vocals)"></i><i style="left:77%;width:15%;background:var(--vocals)"></i></div>
+        <span class="mid">→ vocals.mid</span></div>
+      <div class="lane"><span class="lab" style="color:var(--melody)">MELODY</span>
+        <div class="track"><i style="left:2%;width:6%;background:var(--melody)"></i><i style="left:11%;width:8%;background:var(--melody)"></i><i style="left:23%;width:5%;background:var(--melody)"></i><i style="left:32%;width:9%;background:var(--melody)"></i><i style="left:45%;width:10%;background:var(--melody)"></i><i style="left:59%;width:6%;background:var(--melody)"></i><i style="left:68%;width:9%;background:var(--melody)"></i><i style="left:80%;width:5%;background:var(--melody)"></i><i style="left:88%;width:5%;background:var(--melody)"></i></div>
+        <span class="mid">→ melody.mid</span></div>
+      <div class="lane"><span class="lab" style="color:var(--otros)">OTROS</span>
+        <div class="track"><i style="left:2%;width:24%;background:var(--otros)"></i><i style="left:30%;width:25%;background:var(--otros)"></i><i style="left:59%;width:33%;background:var(--otros)"></i></div>
+        <span class="mid">→ other.mid</span></div>
+      <p style="font:7.5pt 'Menlo',monospace; color:var(--muted); margin-top:0.18in; letter-spacing:0.06em;">
+        + reference_profile.json — BPM · tonalidad · compás · energía · acordes</p>
+    </div>
+  </div>
+</section>
+
+<!-- 05 · POR QUÉ MIDI -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--melody)"></b>Por qué MIDI</div>
+  <h2>Un WAV se escucha.<br>Un MIDI se edita.</h2>
+  <ul class="list" style="margin-bottom:0.3in;">
+    <li><strong>Estándar universal.</strong> Cualquier DAW y herramienta musical lo abre.</li>
+    <li><strong>Editable de verdad.</strong> Cambia notas, instrumentos y arreglos sin regenerar desde cero.</li>
+    <li><strong>Partes separadas.</strong> Drums, bass, melodía y armonía se convierten en capas de audio adaptativo para el juego.</li>
+    <li><strong>Mejorable por humanos.</strong> Un músico puede pulir el resultado después, sin empezar de nuevo.</li>
+  </ul>
+  <p class="quote" style="color:var(--muted);">Un producto 100% generado por IA es limitado.<br><span style="color:var(--ink)">MIDI te devuelve el control.</span></p>
+</section>
+
+<!-- 06 · DIFERENCIACIÓN -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--drums)"></b>Diferenciación</div>
+  <h2>No competimos por el WAV más bonito.</h2>
+  <div class="vs">
+    <div class="row panel">
+      <div class="who"><span class="k" style="color:var(--bass)">VS · SUNO / UDIO</span>
+        <p>Generadores de canciones completas</p></div>
+      <p class="how">Entregan un audio final <strong>opaco</strong>. Nosotros entregamos bloques editables:
+        la calidad del audio la pones tú con tus instrumentos, y modificar e implementar la música en el juego es directo.</p>
+    </div>
+    <div class="row panel">
+      <div class="who"><span class="k" style="color:var(--vocals)">VS · ELEVENLABS</span>
+        <p>Voz, SFX y música generada</p></div>
+      <p class="how">Excelentes en voz y efectos, pero su música también termina en audio cerrado:
+        sin estructura editable ni partes separadas para audio adaptativo.</p>
+    </div>
+  </div>
+  <p class="quote" style="margin-top:0.32in;">Convertimos intención musical y una referencia en
+    <span style="color:var(--melody)">bloques editables</span> que se vuelven audio adaptativo listo para el juego.</p>
+</section>
+
+<!-- 07 · MODELO DE NEGOCIO -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--drums)"></b>Modelo de negocio</div>
+  <h2>Pagas por lo que generas.</h2>
+  <div style="display:flex; gap:0.55in; align-items:flex-start; margin-top:0.1in;">
+    <div>
+      <p class="price">US$ 0.50<small>por minuto de audio generado</small></p>
+    </div>
+    <div style="flex:1; padding-top:0.06in;">
+      <ul class="list">
+        <li><strong>Sin suscripción para empezar.</strong> El costo escala con el uso real.</li>
+        <li><strong>Ejemplo:</strong> un tema de 2 minutos + 4 variaciones ≈ 10 minutos ≈ <strong>US$ 5</strong> — y el resultado es tuyo y editable.</li>
+        <li><strong>A futuro:</strong> planes para estudios y equipos con volumen.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 08 · LEAN CANVAS -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--otros)"></b>Lean canvas</div>
+  <div class="canvas">
+    <div class="cell" style="grid-column:1/3; grid-row:1/3;">
+      <span class="k" style="color:var(--bass)">Problema</span>
+      <ul>
+        <li>Devs indie no saben componer ni preparar audio para su juego</li>
+        <li>Compositores: caros y lentos; packs de stock: genéricos</li>
+        <li>La música de IA llega como WAV cerrado, imposible de adaptar</li>
+      </ul>
+      <span class="k" style="color:var(--muted); margin-top:0.08in;">Alternativas actuales</span>
+      <p style="color:var(--muted); font-size:8.2pt;">Compositor freelance · packs de stock · Suno / Udio</p>
+    </div>
+    <div class="cell" style="grid-column:3/5; grid-row:1;">
+      <span class="k" style="color:var(--melody)">Solución</span>
+      <ul>
+        <li>Análisis musical de la referencia</li>
+        <li>Stems → MIDI por partes</li>
+        <li>Generación de MIDI nuevo con prompt + perfil</li>
+        <li>Preview y export a DAW</li>
+      </ul>
+    </div>
+    <div class="cell" style="grid-column:3/5; grid-row:2;">
+      <span class="k" style="color:var(--vocals)">Métricas clave</span>
+      <ul>
+        <li>Minutos generados / mes</li>
+        <li>Activación: primer MIDI en el DAW</li>
+        <li>Retención por proyecto</li>
+        <li>Margen por minuto generado</li>
+      </ul>
+    </div>
+    <div class="cell" style="grid-column:5/7; grid-row:1/3; border-color:rgba(156,140,240,0.45);">
+      <span class="k" style="color:var(--otros)">Propuesta de valor única</span>
+      <p class="uvp">Prompt + referencia → partes MIDI editables listas para tu DAW y para audio adaptativo. No un WAV cerrado.</p>
+      <span class="k" style="color:var(--muted); margin-top:0.1in;">Concepto</span>
+      <p style="color:var(--muted); font-size:8.2pt;">El copiloto musical del dev indie</p>
+    </div>
+    <div class="cell" style="grid-column:7/9; grid-row:1;">
+      <span class="k" style="color:var(--drums)">Ventaja injusta</span>
+      <ul>
+        <li>Pipeline propio: referencia → perfil → MIDI por partes</li>
+        <li>Salida en estándar MIDI: sin lock-in</li>
+      </ul>
+    </div>
+    <div class="cell" style="grid-column:7/9; grid-row:2;">
+      <span class="k" style="color:var(--melody)">Canales</span>
+      <ul>
+        <li>Comunidades indie: itch.io, Discord, Reddit</li>
+        <li>Game jams y devlogs</li>
+        <li>Integraciones con motores y DAWs</li>
+      </ul>
+    </div>
+    <div class="cell" style="grid-column:9/11; grid-row:1/3;">
+      <span class="k" style="color:var(--vocals)">Segmentos de clientes</span>
+      <ul>
+        <li>Desarrolladores indie que quieren vender su juego</li>
+      </ul>
+      <span class="k" style="color:var(--muted); margin-top:0.08in;">Early adopters</span>
+      <ul>
+        <li>Solo devs</li>
+        <li>Participantes de game jams</li>
+        <li>Estudiantes de gamedev</li>
+      </ul>
+    </div>
+    <div class="cell" style="grid-column:1/6; grid-row:3;">
+      <span class="k" style="color:var(--bass)">Estructura de costos</span>
+      <p>Inferencia (GPU) y almacenamiento · desarrollo del producto · marketing en comunidad</p>
+    </div>
+    <div class="cell" style="grid-column:6/11; grid-row:3;">
+      <span class="k" style="color:var(--drums)">Flujos de ingresos</span>
+      <p>US$ 0.50 por minuto de audio generado · pay-per-use sin suscripción · futuro: planes para estudios</p>
+    </div>
+  </div>
+</section>
+
+<!-- 09 · ROADMAP -->
+<section class="slide">
+  <div class="eyebrow"><b style="background:var(--vocals)"></b>Estado y roadmap</div>
+  <h2>Hoy funciona el motor.<br>Sigue el instrumento.</h2>
+  <div class="cards">
+    <div class="card panel" style="border-color:rgba(94,201,160,0.45);">
+      <span class="k" style="color:var(--melody)">Hoy · hackathon</span>
+      <p>Referencia → análisis musical completo (BPM, tonalidad, compás, energía, acordes) + MIDI por partes: drums, bass, vocals, melody y armonía.</p>
+    </div>
+    <div class="card panel">
+      <span class="k" style="color:var(--vocals)">Siguiente</span>
+      <p>Generación de stems MIDI nuevos guiada por prompt, preview en el navegador y export directo al DAW.</p>
+    </div>
+    <div class="card panel">
+      <span class="k" style="color:var(--otros)">Futuro</span>
+      <p>Configurar instrumentos por parte y renderizar stems de audio adaptativo listos para el motor del juego.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · CIERRE -->
+<section class="slide">
+  <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+    <div class="eyebrow"><b></b>FLIT</div>
+    <p class="quote" style="font-size:25pt; max-width:11in;">
+      «Danos una idea musical y una referencia. Extraemos su ritmo, armonía, energía y partes editables,
+      y con esa estructura creamos <span style="color:var(--melody)">MIDI nuevo</span> que puedes previsualizar,
+      modificar y llevar a tu DAW — en lugar de quedar atrapado en un archivo de audio generado.»
+    </p>
+    <p style="font:9pt 'Menlo',monospace; color:var(--muted); letter-spacing:0.12em; margin-top:0.5in;">GRACIAS · ALFRED CHÁVEZ</p>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.slide').forEach(function(s, i, all){
+    var r = document.createElement('div'); r.className = 'ruler';
+    for (var b = 1; b <= 16; b++){
+      var c = document.createElement('span'); c.textContent = b; r.appendChild(c);
+    }
+    s.prepend(r);
+    var f = document.createElement('div'); f.className = 'foot';
+    f.innerHTML = '<span>FLIT · prompt + referencia → MIDI editable</span>' +
+                  '<span>' + String(i+1).padStart(2,'0') + ' / ' + String(all.length).padStart(2,'0') + '</span>';
+    s.appendChild(f);
+  });
+</script>
+</body>
+</html>
